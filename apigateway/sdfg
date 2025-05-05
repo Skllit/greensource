@@ -1,0 +1,109 @@
+Implementing role-based authorization alongside the token validation in your API Gateway and authentication service involves several steps. The main goal is to check the user's role after the token has been validated and enforce access control based on that role. Here’s how you can achieve that.
+
+### Steps for Role-Based Authorization
+
+1. **Update User Roles in the JWT**: Ensure that your JWT includes user role information when it is generated. Typically, this is done during the login process.
+   
+2. **Modify the Token Validation Endpoint**: Update the token validation to extract user roles from the JWT.
+
+3. **Create Role-Based Middleware**: Create a middleware that checks the user’s role and grants or denies access to specific routes.
+
+4. **Use Role-Based Middleware in Routes**: Apply the role-based middleware to the necessary routes in your API Gateway.
+
+### 1. Update User Roles in the JWT
+
+Make sure that when the JWT is created, it includes the user’s roles. For example, in your authentication service’s login method:
+
+```typescript
+// Example in authController.ts
+import jwt from 'jsonwebtoken';
+
+// After validating user credentials
+const user = {
+    id: userId,
+    username: username,
+    roles: ['admin', 'finance'], // Example roles
+};
+
+const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: '1h' });
+```
+
+### 2. Modify the Token Validation Endpoint
+
+Update the `validateToken` function to include roles in the response:
+
+```typescript
+// src/controllers/authController.ts
+export const validateToken = (req: Request, res: Response): void => {
+    const token = req.headers.authorization?.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ message: 'Access token required' });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET as string, (err, decoded) => {
+        if (err) {
+            return res.status(403).json({ message: 'Invalid token' });
+        }
+
+        // Return the user information or any relevant data you need
+        res.status(200).json({ user: decoded });
+    });
+};
+```
+
+### 3. Create Role-Based Middleware
+
+Create a new middleware that checks if the user has the required roles for specific routes.
+
+```typescript
+// src/middleware/roleAuthorization.ts
+import { Request, Response, NextFunction } from 'express';
+
+export const authorizeRoles = (...roles: string[]) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+        if (!req.user || !req.user.roles) {
+            return res.status(403).json({ message: 'Access denied: No roles found' });
+        }
+
+        const hasRole = roles.some(role => req.user.roles.includes(role));
+        if (!hasRole) {
+            return res.status(403).json({ message: 'Access denied: Insufficient permissions' });
+        }
+
+        next(); // User has the required role, proceed to next middleware
+    };
+};
+```
+
+### 4. Use Role-Based Middleware in Routes
+
+Apply the `authorizeRoles` middleware to routes in your API Gateway. Here's how you can protect specific endpoints based on user roles.
+
+```typescript
+// src/routes/financeRoutes.ts
+import express from 'express';
+import { getAllFinance, addFinance } from '../controllers/financeController';
+import { authenticateJWT } from '../middleware/authenticate';
+import { authorizeRoles } from '../middleware/roleAuthorization';
+
+const router = express.Router();
+
+router.get('/finance', authenticateJWT, authorizeRoles('admin', 'finance'), getAllFinance); // Only admin and finance roles can access
+router.post('/finance', authenticateJWT, authorizeRoles('admin'), addFinance); // Only admin can add finance
+
+export default router;
+```
+
+### Summary of Implementation
+
+1. **User Roles in JWT**: Make sure that when generating the JWT, the user roles are included.
+2. **Token Validation**: Modify the token validation process to ensure that user roles are returned with the user object.
+3. **Role Authorization Middleware**: Create middleware to check for the required roles.
+4. **Apply Middleware**: Use the `authorizeRoles` middleware on routes that require specific role access.
+
+### Example Usage
+
+Now, if a user with the "admin" role tries to access a route that requires the "finance" role, they will be granted access. Conversely, if a user without the required roles attempts to access those routes, they will receive an "Access denied" message.
+
+With this setup, you can effectively implement role-based authorization in your API Gateway and manage access control across your microservices architecture. Let me know if you have any questions or need further adjustments!
