@@ -2,7 +2,8 @@
 import mongoose from 'mongoose';
 
 // Use MongoDB Atlas connection string
-const dbURI = 'mongodb://127.0.0.1:27017/auth-userdb';
+const dbURI = process.env.MONGO_URI
+  ||'mongodb://127.0.0.1:27017/auth-userdb';
 
 const connectDB = async () => {
     try {

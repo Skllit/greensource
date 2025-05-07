@@ -1,0 +1,96 @@
+services:
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  apigateway:
+    build: ./apigateway
+    ports:
+      - "3800:3800"
+    depends_on:
+      - admin-frontend
+      - auth-service
+      - consumer-service
+      - delivery-service
+      - delivery-frontend
+      - farmer-service
+      - frontend
+      - order-payment-service
+      - product-service
+    environment:
+      NODE_ENV: development
+
+  admin-frontend:
+    build: ./admin-frontend
+    ports:
+      - "3803:3803"
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3801:3801"
+
+  delivery-frontend:
+    build: ./delivery-frontend
+    ports:
+      - "3802:3802"
+
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "3804:3804"
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: "mongodb://mongo:27017/auth-userdb"
+
+  consumer-service:
+    build: ./consumer-service
+    ports:
+      - "3806:3806"
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: "mongodb://mongo:27017/customers"
+
+  delivery-service:
+    build: ./delivery-service
+    ports:
+      - "3809:3809"
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: "mongodb://mongo:27017/delivery"
+
+  farmer-service:
+    build: ./farmer-service
+    ports:
+      - "3805:3805"
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: "mongodb://mongo:27017/farmers"
+
+  order-payment-service:
+    build: ./order-payment-service
+    ports:
+      - "3808:3808"
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: "mongodb://mongo:27017/orders"
+
+  product-service:
+    build: ./product-service
+    ports:
+      - "3807:3807"
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: "mongodb://mongo:27017/products"
+
+volumes:
+  mongo-data:

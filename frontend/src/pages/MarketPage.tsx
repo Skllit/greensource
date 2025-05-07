@@ -241,15 +241,15 @@ export default function MarketPage() {
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
                     <p className="text-sm text-gray-500">Min Price</p>
-                    <p className="font-bold text-green-600">${record.min_price}</p>
+                    <p className="font-bold text-green-600">₹{record.min_price}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Max Price</p>
-                    <p className="font-bold text-red-600">${record.max_price}</p>
+                    <p className="font-bold text-red-600">₹{record.max_price}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Modal Price</p>
-                    <p className="font-bold text-blue-600">${record.modal_price}</p>
+                    <p className="font-bold text-blue-600">₹{record.modal_price}</p>
                   </div>
                 </div>
                 <p className="text-xs text-gray-500 text-center mt-1">Price per quintal</p>
